@@ -1,0 +1,8 @@
+; Uses CLEANSTATS for every item. Basically have to do post stuff on the whole function. Specifically it currently just removes the behavior identifier functions and replaces them with ???
+
+ARRAYFORMULA(TO_TEXT(
+
+IFERROR(
+    REGEXREPLACE(CLEANSTATS(), ""(?:<d ref)(.*?)(?:/>)"", """"),
+    IFERROR(CLEANSTATS(), """")
+)))
