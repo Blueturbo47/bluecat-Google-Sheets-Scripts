@@ -1,0 +1,7 @@
+; finds and cleans the name of an item
+
+ARRAYFORMULA(
+IF(ISBLANK(itemtooltips), 
+    """",
+    REGEXREPLACE(RIGHT(itemtooltips, LEN(itemtooltips) - FIND(""="", itemtooltips)), ""(?i)<(.*)>"", """")
+))
