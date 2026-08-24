@@ -1,0 +1,144 @@
+; ALLEQUIP
+; Displays the equip location for every item
+"ARRAYFORMULA(
+IF(IFERROR(
+
+    SEARCH(""<c val=FFFFFF>R"", GETBETTERSTATS()), false), 
+    """", 
+
+    SUBSTITUTE(SUBSTITUTE(
+        IFERROR(MID(GETBETTERSTATS(), SEARCH(""<c val=FFFFFF>"", GETBETTERSTATS()) + 14, 
+        IFERROR(SEARCH(""<n/>R"", GETBETTERSTATS()), SEARCH(""<n/><n/>"", GETBETTERSTATS())) - SEARCH(""<c val=FFFFFF>"", GETBETTERSTATS()) - 14), """"), 
+    
+    ""</c>"", """"), 
+    ""<n/>"", "" "")
+))"
+
+; ---------
+
+
+; ALLNAME
+; finds and cleans the name of an item
+"ARRAYFORMULA(
+IF(ISBLANK(itemtooltips), 
+    """",
+    REGEXREPLACE(RIGHT(itemtooltips, LEN(itemtooltips) - FIND(""="", itemtooltips)), ""(?i)<(.*)>"", """")
+))"
+
+; ---------
+
+
+; ALLITEMSTATS
+; Uses CLEANSTATS for every item. Basically have to do post stuff on the whole function. Specifically removes the behavior functions and replaces them with ???
+"ARRAYFORMULA(TO_TEXT(
+
+IFERROR(
+    REGEXREPLACE(CLEANSTATS(), ""(?:<d ref)(.*?)(?:/>)"", """"),
+    IFERROR(CLEANSTATS(), """")
+)))"
+
+; ---------
+
+
+; CLEANSTATS
+; finds and cleans up the dirty raw stats
+
+"SPLIT(
+
+SUBSTITUTE(SUBSTITUTE(SUBSTITUTE(SUBSTITUTE(SUBSTITUTE(SUBSTITUTE(SUBSTITUTE(SUBSTITUTE(SUBSTITUTE(SUBSTITUTE(SUBSTITUTE(SUBSTITUTE(SUBSTITUTE(
+
+RIGHT(
+GETBETTERSTATS(), LEN(GETBETTERSTATS()) - 
+    IFERROR(
+        SEARCH(""+<c val=00FF00>"", GETBETTERSTATS()) + 14, 
+    IFERROR(
+        SEARCH(""<c val=FF8000>"", GETBETTERSTATS()) + 13, 
+    IFERROR(
+        SEARCH(""<s val=itemtooltip>"", GETBETTERSTATS()) + 18, 
+    SEARCH(""="", GETBETTERSTATS()))))
+), 
+
+""<c val=FF80FF>"", """"),
+""<c val=FF8000><c val=FF8000>"", ""<c val=FF8000>""),
+""<n/><c val=FF8000><n/><c val=FF8000>"", ""<n/><n/><c val=FF8000>""),
+""<n/><n/><c val=FF8000>Passive - </c>"", ""<n/>~""),
+""<n/><c val=FF8000>Passive - </c>"", ""<n/>~""),
+""</c><n/><n/><c val=FF8000>"", ""<n/>~""),
+""<n/><n/><c val=FF8000>"", ""<n/>~""),
+""<c val=0080FF>"", ""<n/>~<n/>""),
+""<n/><c val=FF8000><n/>"", ""<n/>~""),
+""<n/><n/>"", ""<n/>~""), 
+""+<c val=00FF00>"", ""<n/>""), 
+""</c>"", ""‎<n/>""),
+""</s>"", """"),
+
+""<n/>"", false, true)"
+
+; ---------
+
+
+; GETBETTERSTATS
+; Removes all the quotes from the text since they can break some things
+"ARRAYFORMULA(
+
+SUBSTITUTE(SUBSTITUTE(itemstatsdirty,
+
+"""""""", """"), 
+""<c val=FFFFFF><c val=FFFFFF>"", ""<c val=FFFFFF>""
+
+))"
+
+; ---------
+
+
+; GETITEMID(itemname)
+; gets the row (id) of an item based on its name
+MATCH(itemname, itemnames, 0)
+
+; ---------
+
+; PASSIVESFROMID(itemid)
+; finds the passives indicated by a "~" infront of them, concates (combines) them, and then puts them in the cell where the command is run based on the name provided
+; generally include a GETITEMID(itemanme) inplace of itemid
+"IFNA(TEXTJOIN("" 
+
+"", TRUE, 
+WRAPROWS(
+    
+FILTER(
+    RIGHT(STATCELLFROMID(itemid),
+        LEN(STATCELLFROMID(itemid)) - 1
+    ),
+
+    LEFT(STATCELLFROMID(itemid), 1) = ""~"")
+
+, 1)
+), """")"
+
+; ---------
+
+
+; STATSFROMID(itemid)
+; finds the stats of all items, as long as they don't have a "~" infront, otherwise that would be a passive. It puts it in 2 columns because 1 in the actual stat, and 1 is the statname
+; generally include a GETITEMID(itemanme) inplace of itemid
+"IFNA(
+WRAPROWS(
+    
+FILTER(STATCELLFROMID(itemid), 
+    NOT(LEFT(STATCELLFROMID(itemid), 1) = ""~"")
+)
+
+, 2)
+, """")"
+
+; ---------
+
+
+; STATCELLFROMID(itemid)
+; Gets the cell of stats from an itemid. Best used with an arrayformula so it progresses in the row for multiple cells
+"INDIRECT(""variables!""
+    &SUBSTITUTE(ADDRESS(1, COLUMN(itemstatcleanstart), 4), 1, """")&itemid&"":""
+    &SUBSTITUTE(ADDRESS(1, ArrayFormula(Max(COLUMN(INDIRECT(""variables!A""&itemid&"":""&itemid))*(--(INDIRECT(""variables!A""&itemid&"":""&itemid)<>"""")))), 4), 1, """")&itemid
+)"
+
+; ---------
